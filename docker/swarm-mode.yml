@@ -1,0 +1,62 @@
+---
+- name: Pre-setting
+  hosts: all
+  become: true
+  gather_facts: no
+  tasks:
+  - name: open docker-swarm service
+    firewalld:
+      immediate: true
+      permanent: yes
+      service: docker-swarm
+      state: enabled
+  - name: install the pip
+    yum:
+      name: "{{ item }}"
+    loop:
+      - epel-release
+      - python2-pip
+
+  - name: pip install docker
+    pip:
+      name: docker
+
+- name: Create Swarm
+  hosts: manager
+  become: true
+  tasks:
+  - name: docker swarm init
+    docker_swarm:
+      advertise_addr: "{{ ansible_facts.default_ipv4.address }}"
+    when: inventory_hostname == "docker-1"
+
+  - name: inspect swarm
+    docker_swarm_info:
+    register: swarm_info
+    when: inventory_hostname != "docker-1"
+    delegate_to: docker-1
+    ignore_errors: yes
+
+  - name: join the manager
+    docker_swarm:
+      join_token: "{{ swarm_info.swarm_facts.JoinTokens.Manager }}"
+      advertise_addr: "{{ ansible_facts.default_ipv4.address }}"
+      remote_addrs: [ '10.0.0.101:2377' ]   #10.0.0.101: docker-1
+      state: join
+    when: inventory_hostname != "docker-1"
+    
+- name: Worker
+  hosts: worker
+  become: true
+  tasks:
+  - name: inspect swarm
+    docker_swarm_info:
+    register: swarm_info
+    delegate_to: docker-1
+
+  - name: join the worker
+    docker_swarm:
+      join_token: "{{ swarm_info.swarm_facts.JoinTokens.Worker }}"
+      advertise_addr: "{{ ansible_facts.default_ipv4.address }}"
+      remote_addrs: [ '10.0.0.101:2377' ]  #10.0.0.101: docker-1
+      state: join
