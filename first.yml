@@ -1,0 +1,7 @@
+---
+- name: Display Hello
+  hosts: "{{ host }}"
+  tasks:
+  - name: Hello
+    debug:
+      msg: hello awx
