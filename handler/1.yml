@@ -1,0 +1,20 @@
+---
+- name: 1
+  hosts: m1
+  remote_user: devops
+  gather_facts: no
+  tasks:
+  - name: first task
+    command: hostname
+    notify:
+      - test
+
+  - name: second task
+    command: hostname
+    notify:
+      - test
+
+  handlers:
+  - name: test
+    debug:
+      msg: this is test
