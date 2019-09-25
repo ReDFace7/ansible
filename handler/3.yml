@@ -1,5 +1,5 @@
 ---
-- name: 2
+- name: 3
   hosts: m1
   remote_user: devops
   gather_facts: no
@@ -8,8 +8,7 @@
     command: hostname
     notify:
       - test1
-      - test2
-
+      
   - name: second task
     debug:
       msg: last module
@@ -19,6 +18,6 @@
     debug:
       msg: this is test1
 
-  - name: test2
+  - name: test1
     debug:
-      msg: this is test2
+      msg: this is test1-1
